@@ -3,13 +3,13 @@ package fsm
 import "sync"
 
 type FSM interface {
-	Map(string, func(string, []interface{}) (string, []interface{}))
-	Run(string, []interface{})
+	Map(string, func(string, interface{}) (string, interface{}))
+	Run(string, interface{})
 	Stop()
 }
 
 type FSMI struct {
-	statex map[string]func(string, []interface{}) (string, []interface{})
+	statex map[string]func(string, interface{}) (string, interface{})
 	state string
 	lock *sync.Mutex
 }
@@ -23,7 +23,7 @@ func New() *FSMI {
 	return &FSMI{
 		lock: &sync.Mutex{},
 		state: STOPPED,
-		statex: make(map[string]func(string, []interface{}) (string, []interface{})),
+		statex: make(map[string]func(string, interface{}) (string, interface{})),
 	}
 }
 
@@ -33,11 +33,11 @@ func (f *FSMI) Stop() {
 	f.lock.Unlock()
 }
 
-func (f *FSMI) Map(e string, to func(string, []interface{}) (string, []interface{})) {
+func (f *FSMI) Map(e string, to func(string, interface{}) (string, interface{})) {
 	f.statex[e] = to
 }
 
-func (f *FSMI) Run(e string, ps []interface{}) {
+func (f *FSMI) Run(e string, ps interface{}) {
 	f.state = RUNNING
 	for {
 		f.lock.Lock()
