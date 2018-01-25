@@ -5,7 +5,7 @@ import (
 	"bitbucket.org/subiz/fsm"
 )
 
-var st fsm.FSM = fsm.New()
+var st fsm.FSM = fsm.New("van")
 
 type S struct {}
 

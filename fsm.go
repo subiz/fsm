@@ -1,6 +1,10 @@
 package fsm
 
-import "sync"
+import (
+	"sync"
+	"time"
+	"fmt"
+)
 
 type FSM interface {
 	Map(string, func(string, interface{}) (string, interface{}))
@@ -12,6 +16,7 @@ type FSMI struct {
 	statex map[string]func(string, interface{}) (string, interface{})
 	state string
 	lock *sync.Mutex
+	id string
 }
 
 const (
@@ -19,8 +24,9 @@ const (
 	STOPPED = "stopped"
 )
 
-func New() *FSMI {
+func New(id string) *FSMI {
 	return &FSMI{
+		id: id,
 		lock: &sync.Mutex{},
 		state: STOPPED,
 		statex: make(map[string]func(string, interface{}) (string, interface{})),
@@ -39,6 +45,7 @@ func (f *FSMI) Map(e string, to func(string, interface{}) (string, interface{}))
 
 func (f *FSMI) Run(e string, ps interface{}) {
 	f.state = RUNNING
+	defer f.Stop()
 	for {
 		f.lock.Lock()
 		if f.state == STOPPED {
@@ -48,8 +55,17 @@ func (f *FSMI) Run(e string, ps interface{}) {
 		f.lock.Unlock()
 
 		if _, ok := f.statex[e]; !ok {
-			panic("unknow state " + e)
+			panic("unknow state " + e + ".")
 		}
-		e, ps = f.statex[e](e, ps)
+		func() {
+			defer func() {
+				r := recover()
+				if r != nil {
+					fmt.Printf("state error, id = %s; err%v\n", f.id, r)
+					time.Sleep(5 * time.Second)
+				}
+			}()
+			e, ps = f.statex[e](e, ps)
+		}()
 	}
 }
