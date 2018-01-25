@@ -20,7 +20,9 @@ func (s S) State2(e string, ps interface{}) (string, interface{}) {
 
 func TestFSM(t *testing.T) {
 	s := &S{}
-	st.Map("init", s.State1)
-	st.Map("state2", s.State2)
+	st.Map([]fsm.State{
+		fsm.State{"init", "STATE1", s.State1},
+		fsm.State{"state2", "STATE2", s.State2},
+	})
 	st.Run("init", nil)
 }

@@ -7,13 +7,21 @@ import (
 )
 
 type FSM interface {
-	Map(string, func(string, interface{}) (string, interface{}))
+	Map([]State)
 	Run(string, interface{})
 	Stop()
+	GetState() string
+}
+
+type State struct {
+	Event string
+	State string
+	Function func(string, interface{}) (string, interface{})
 }
 
 type FSMI struct {
-	statex map[string]func(string, interface{}) (string, interface{})
+	current_state string
+	statex map[string]State
 	state string
 	lock *sync.Mutex
 	id string
@@ -29,7 +37,7 @@ func New(id string) *FSMI {
 		id: id,
 		lock: &sync.Mutex{},
 		state: STOPPED,
-		statex: make(map[string]func(string, interface{}) (string, interface{})),
+		statex: make(map[string]State),
 	}
 }
 
@@ -39,8 +47,14 @@ func (f *FSMI) Stop() {
 	f.lock.Unlock()
 }
 
-func (f *FSMI) Map(e string, to func(string, interface{}) (string, interface{})) {
-	f.statex[e] = to
+func (f *FSMI) GetState() string {
+	return f.current_state
+}
+
+func (f *FSMI) Map(ss []State) {
+	for _, s := range ss {
+		f.statex[s.Event] = s
+	}
 }
 
 func (f *FSMI) Run(e string, ps interface{}) {
@@ -65,7 +79,8 @@ func (f *FSMI) Run(e string, ps interface{}) {
 					time.Sleep(5 * time.Second)
 				}
 			}()
-			e, ps = f.statex[e](e, ps)
+			f.current_state = f.statex[e].State
+			e, ps = f.statex[e].Function(e, ps)
 		}()
 	}
 }
