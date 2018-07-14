@@ -2,7 +2,7 @@ package fsm_test
 
 import (
 	"testing"
-	"bitbucket.org/subiz/fsm"
+	"git.subiz.net/fsm"
 )
 
 var st fsm.FSM = fsm.New("van")
